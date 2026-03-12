@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCG Store - Powered by GCG-13</title>
+    
+    <!-- FAVICON -->
+    <link rel="icon" type="image/png" href="logo/favicon.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="logo/favicon.png" sizes="192x192">
+    <link rel="apple-touch-icon" href="logo/favicon.png">
+    
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de la fuente Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            background-image: radial-gradient(#1e293b 1px, transparent 1px);
+            background-size: 40px 40px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        /* Contenedor principal */
+        .auth-container {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        /* Campos de formulario */
+        .form-input {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+        }
+        /* Botones de pestaña */
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .tab-btn.active {
+            color: #ef4444;
+            border-bottom: 2px solid #ef4444;
+        }
+        /* Botón de acción principal */
+        .main-btn {
+            background-color: #ef4444;
+            transition: all 0.3s ease;
+        }
+        .main-btn:hover {
+            background-color: #b91c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Mensajes */
+        .message-box {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .message-box.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+        .message-box.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+        .message-box.info {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        .modal-content {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            max-height: 90vh;
+        }
+        #termsContent h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #ef4444;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        #termsContent p { margin-bottom: 1rem; line-height: 1.5; }
+        #termsContent strong { color: #ffffff; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <!-- CONTENEDOR DE AUTENTICACIÓN -->
+    <div class="auth-container w-full max-w-md p-8 rounded-xl">
+        
+        <!-- LOGO -->
+        <div class="text-center mb-6">
+            <img src="logo/logo.png" alt="Logo GCG Store" 
+                 class="mx-auto mb-2 w-16 h-16 rounded-full border-2 border-red-500 object-cover"
+                 onerror="this.onerror=null; this.src='https://placehold.co/64x64/ef4444/ffffff?text=GCG';">
+            <h1 class="text-3xl font-extrabold text-white">GCG Store</h1>
+            <p class="text-xs text-slate-400">BY GCG-13</p>
+        </div>
+
+        <!-- TABS -->
+        <div class="flex border-b border-slate-700 mb-6 text-center">
+            <div id="tabLogin" class="tab-btn flex-1 active" data-target="formLogin">Iniciar Sesión</div>
+            <div id="tabRegister" class="tab-btn flex-1" data-target="formRegister">Registrarse</div>
+        </div>
+
+        <!-- Mensajes -->
+        <div id="messageBox" class="hidden message-box text-sm font-semibold" role="alert"></div>
+
+        <!-- LOGIN -->
+        <form id="formLogin" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">Correo Electrónico</label>
+                <input type="email" id="loginEmail" placeholder="tu@email.com" required class="form-input w-full p-3 rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">Contraseña</label>
+                <input type="password" id="loginPassword" placeholder="******" required class="form-input w-full p-3 rounded-lg">
+            </div>
+            
+            <button type="submit" class="main-btn text-white font-bold py-3 rounded-lg w-full">
+                Entrar a GCG Store
+            </button>
+
+            <p class="text-center text-sm pt-2">
+                <a href="#" id="forgotPasswordLink" class="text-slate-400 hover:text-red-400 hover:underline transition-colors">¿Olvidaste tu contraseña?</a>
+            </p>
+        </form>
+
+        <!-- REGISTRO -->
+        <form id="formRegister" class="space-y-4 hidden">
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">Nombre de Usuario</label>
+                <input type="text" id="registerUsername" placeholder="el_ganador10000" required class="form-input w-full p-3 rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">Correo Electrónico</label>
+                <input type="email" id="registerEmail" placeholder="ejemplo@correo.com" required class="form-input w-full p-3 rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">Fecha Nacimiento</label>
+                <input type="date" id="registerDOB" required class="form-input w-full p-3 rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">Contraseña</label>
+                <input type="password" id="registerPassword" placeholder="******" required class="form-input w-full p-3 rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">Confirmar Contraseña</label>
+                <input type="password" id="registerConfirmPassword" placeholder="******" required class="form-input w-full p-3 rounded-lg">
+            </div>
+            
+            <div class="flex items-center">
+                <input type="checkbox" id="registerTerms" required class="form-input h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                <label for="registerTerms" class="ml-2 block text-sm text-slate-400">
+                    Acepto los <a href="#" id="termsLink" class="text-red-400 hover:underline">Términos de GCG Store</a>
+                </label>
+            </div>
+
+            <button type="submit" class="main-btn text-white font-bold py-3 rounded-lg w-full">
+                Crear Cuenta en GCG
+            </button>
+        </form>
+    </div>
+
+    <!-- MODAL DE TÉRMINOS -->
+    <div id="termsModal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="modal-content w-full max-w-3xl rounded-xl shadow-2xl p-6 overflow-y-auto">
+            <div class="flex justify-between items-start mb-4 border-b border-slate-700 pb-2">
+                <h2 class="text-2xl font-bold text-white">Términos y Condiciones</h2>
+                <button id="closeModalBtn" class="text-slate-400 hover:text-red-500 transition-colors text-2xl font-bold">&times;</button>
+            </div>
+            <div id="termsContent" class="text-slate-300 text-sm space-y-4">
+                <p>Cargando términos...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL DE RECUPERACIÓN -->
+    <div id="resetPasswordModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+        <div class="bg-slate-800 w-full max-w-md rounded-xl border border-slate-600 flex flex-col shadow-2xl relative">
+            <div class="flex justify-between items-center p-6 border-b border-slate-700 bg-slate-900/50 rounded-t-xl">
+                <h2 class="text-xl font-bold text-white">🔑 Recuperar Contraseña</h2>
+                <button id="closeResetPasswordX" class="text-slate-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <form id="resetPasswordForm" class="p-6 flex flex-col gap-4">
+                <p class="text-sm text-slate-400">Ingresa tu correo. Te enviaremos un enlace para restablecer tu contraseña.</p>
+                <input type="email" id="resetEmail" class="form-input w-full px-4 py-3 rounded-lg outline-none" placeholder="tu@email.com" required>
+                <div id="resetMessage" class="hidden p-3 rounded text-sm text-center border border-transparent"></div>
+                <button type="submit" id="btnResetPassword" class="btn-primary text-white font-bold py-3 rounded-lg mt-2 transition-all">Enviar Enlace</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signOut } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+
+        // --- CONFIGURACIÓN DE FIREBASE ---
+        // Se cargan las variables globales proporcionadas por el entorno de Canvas.
+        // Si estás en Netlify y no se cargan, reemplaza el objeto vacío {} con la configuración real de tu proyecto.
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyBuMR96QYOR2YIQtTmGhdCGRwWMLtPZHjg",
+            authDomain: "sample-firebase-ai-app-bc1bf.firebaseapp.com",
+            projectId: "sample-firebase-ai-app-bc1bf",
+            storageBucket: "sample-firebase-ai-app-bc1bf.firebasestorage.app",
+            messagingSenderId: "809905562994",
+            appId: "1:809905562994:web:5f1b15b1da23d892a2a9eb"
+        };
+        
+        // Variable para la ruta de Firestore
+        let storageAppId = firebaseConfig.projectId;
+        // Si estamos en el entorno Canvas, usamos la configuración inyectada para las rutas de Firestore.
+        if (typeof __app_id !== 'undefined') {
+            storageAppId = __app_id;
+        }
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- UI Y EVENTOS ---
+        const tabLogin = document.getElementById('tabLogin');
+        const tabRegister = document.getElementById('tabRegister');
+        const formLogin = document.getElementById('formLogin');
+        const formRegister = document.getElementById('formRegister');
+        const messageBox = document.getElementById('messageBox'); 
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink'); 
+        
+        const termsLink = document.getElementById('termsLink');
+        const termsModal = document.getElementById('termsModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const termsContent = document.getElementById('termsContent');
+        
+        function markdownToHtml(markdown) {
+            let html = markdown.replace(/^#\s*(.*)$/gm, '<h2>$1</h2>').replace(/^\*{2}(.*?)\*{2}/gm, '<strong>$1</strong>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>').replace(/^(.*)$/gm, '<p>$1</p>'); 
+            return html.replace(/<p><h2>/g, '<h2>').replace(/<\/h2><\/p>/g, '</h2>');
+        }
+
+        function showMessage(element, message, type = 'info') {
+            element.textContent = message;
+            element.className = `message-box text-sm font-semibold ${type}`;
+            element.classList.remove('hidden');
+        }
+
+        function hideMessage() { messageBox.classList.add('hidden'); }
+
+        function switchTab(targetId) {
+            tabLogin.classList.remove('active'); tabRegister.classList.remove('active');
+            formLogin.classList.add('hidden'); formRegister.classList.add('hidden');
+            if (targetId === 'formLogin') { tabLogin.classList.add('active'); formLogin.classList.remove('hidden'); } 
+            else { tabRegister.classList.add('active'); formRegister.classList.remove('hidden'); }
+            hideMessage();
+        }
+
+        tabLogin.addEventListener('click', () => switchTab('formLogin'));
+        tabRegister.addEventListener('click', () => switchTab('formRegister'));
+
+        // --- MODAL TÉRMINOS ---
+        termsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            termsModal.classList.remove('hidden');
+            const termsMarkdown = `# Términos y Condiciones de Uso de GCG Store\n\nAl crear una cuenta en GCG Store, el usuario acepta las siguientes condiciones:\n\n## 1. Descargo de Responsabilidad\n**GCG Store NO** está afiliado, asociado, autorizado, respaldado ni conectado oficialmente con Roblox Corporation. Los nombres y marcas son propiedad de sus dueños.\n\n## 2. Productos Digitales\nTodos los artículos son bienes digitales intangibles. No se enviará nada físico.\n\n## 3. Política de Reembolsos\n**NO** ofrecemos reembolsos ni devoluciones una vez entregado el artículo.\n\n## 4. Conducta\nCualquier intento de estafa resultará en la suspensión permanente.`;
+            termsContent.innerHTML = markdownToHtml(termsMarkdown);
+        });
+        closeModalBtn.addEventListener('click', () => termsModal.classList.add('hidden'));
+        termsModal.addEventListener('click', (e) => { if (e.target === termsModal) termsModal.classList.add('hidden'); });
+
+        // --- RECUPERAR CONTRASEÑA ---
+        const resetPasswordModal = document.getElementById('resetPasswordModal');
+        const closeResetPasswordX = document.getElementById('closeResetPasswordX');
+        const resetPasswordForm = document.getElementById('resetPasswordForm');
+        const resetMessage = document.getElementById('resetMessage');
+        const btnResetPassword = document.getElementById('btnResetPassword');
+
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            resetPasswordModal.classList.remove('hidden');
+            hideMessage(); resetMessage.classList.add('hidden');
+        });
+        closeResetPasswordX.addEventListener('click', () => resetPasswordModal.classList.add('hidden'));
+
+        resetPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('resetEmail').value;
+            btnResetPassword.disabled = true; btnResetPassword.textContent = "Enviando...";
+            try {
+                await sendPasswordResetEmail(auth, email);
+                showMessage(resetMessage, "¡Correo enviado! Revisa tu bandeja de entrada.", "success");
+            } catch (error) {
+                showMessage(resetMessage, "Error: " + error.message, "error");
+            } finally {
+                btnResetPassword.disabled = false; btnResetPassword.textContent = "Enviar Enlace";
+            }
+        });
+
+        // --- REGISTRO (MODIFICADO PARA VERIFICACIÓN) ---
+        formRegister.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideMessage();
+            
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            const username = document.getElementById('registerUsername').value;
+            const dob = document.getElementById('registerDOB').value;
+            const termsChecked = document.getElementById('registerTerms').checked;
+
+            if (password !== confirmPassword) { showMessage(messageBox, "Las contraseñas no coinciden.", "error"); return; }
+            if (!termsChecked) { showMessage(messageBox, "Debes aceptar los términos.", "error"); return; }
+
+            try {
+                showMessage(messageBox, "Creando cuenta...", "info");
+
+                // 1. Crear usuario
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // 2. Guardar datos
+                await setDoc(doc(db, `artifacts/${storageAppId}/users/${user.uid}/user_data/profile`), {
+                    fullName: username, dateOfBirth: dob, email: email, role: 'customer', brand: 'GCG-13', createdAt: new Date()
+                });
+
+                // 3. Enviar verificación
+                await sendEmailVerification(user);
+
+                // 4. CERRAR SESIÓN PARA OBLIGAR A VERIFICAR (IMPORTANTE)
+                await signOut(auth);
+
+                showMessage(messageBox, "¡Cuenta creada! Se ha enviado un correo de verificación. Por favor verifícalo antes de iniciar sesión.", "success");
+                formRegister.reset();
+                
+                // Cambiar a pestaña login para que entre con sus credenciales
+                setTimeout(() => switchTab('formLogin'), 4000);
+
+            } catch (error) {
+                console.error(error);
+                let msg = "Error en el registro.";
+                if (error.code === 'auth/email-already-in-use') msg = "El correo ya está registrado.";
+                if (error.code === 'auth/weak-password') msg = "La contraseña es muy débil.";
+                showMessage(messageBox, msg, "error");
+            }
+        });
+
+        // --- LOGIN (CON CHEQUEO DE VERIFICACIÓN) ---
+        formLogin.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideMessage();
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                showMessage(messageBox, "Verificando credenciales...", "info");
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // CHECKEO OBLIGATORIO
+                if (!user.emailVerified) {
+                    showMessage(messageBox, "Tu correo no ha sido verificado aún. Revisa tu bandeja de entrada o spam.", "error");
+                    await signOut(auth); // Sacarlo si no ha verificado
+                    return;
+                }
+                
+                showMessage(messageBox, "¡Bienvenido!", "success");
+                setTimeout(() => { window.location.href = "store.html"; }, 1000);
+
+            } catch (error) {
+                console.error(error);
+                showMessage(messageBox, "Credenciales incorrectas o usuario no encontrado.", "error");
+            }
+        });
+    </script>
+</body>
+</html>

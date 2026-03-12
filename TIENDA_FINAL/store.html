@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo | GCG Store</title>
+    
+    <link rel="icon" type="image/png" href="logo/favicon.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="logo/favicon.png" sizes="192x192">
+    <link rel="apple-touch-icon" href="logo/favicon.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Azul oscuro de fondo */
+            color: #e2e8f0; /* Color de texto claro */
+            min-height: 100vh;
+        }
+        
+        /* Contenedor del header con sombra */
+        .header-container {
+            background-color: #1e293b;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            border-bottom: 1px solid #334155;
+            position: sticky;
+            top: 0;
+            z-index: 50; /* Z-index alto para el header */
+        }
+
+        /* Botones de categoría */
+        .category-btn {
+            white-space: nowrap; 
+            padding: 0.5rem 1rem;
+            border-radius: 9999px; 
+            font-weight: 600;
+            transition: all 0.2s ease;
+            background-color: #334155; 
+            color: #94a3b8; 
+        }
+        .category-btn:hover {
+            background-color: #475569; 
+            color: #f1f5f9;
+        }
+        .category-btn.active {
+            background-color: #ef4444; 
+            color: white;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+            transform: scale(1.05);
+        }
+        
+        /* Cuadrícula de productos */
+        .product-card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Imagen de producto (Placeholder con estilo) */
+        .product-image-placeholder {
+            min-height: 150px;
+            background-color: #334155; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #94a3b8;
+            font-weight: 700;
+            border-bottom: 1px solid #475569;
+            overflow: hidden; 
+        }
+
+        .product-image-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Cambiado a contain para que se vea todo el objeto */
+        }
+
+        /* Estilo para la barra de categorías con scroll horizontal */
+        .categories-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; 
+        }
+        .categories-container::-webkit-scrollbar {
+            display: none; 
+        }
+
+        /* Estilos del Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100; /* Alto z-index para estar por encima de todo */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            max-width: 90%;
+            max-height: 90%;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+        .modal-overlay.open .modal-content {
+            transform: scale(1);
+        }
+
+        /* Estilos específicos para la tabla de variantes */
+        .variants-table th, .variants-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+        .variants-table th {
+            background-color: #334155;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .variants-table tr:hover {
+            background-color: #1e293b;
+        }
+        
+        /* NUEVOS ESTILOS: Menú Desplegable */
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 10px); /* 10px debajo del botón */
+            right: 0;
+            width: 200px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+            z-index: 60; 
+            padding: 0.5rem 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .dropdown-menu.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            transition: background-color 0.15s;
+            cursor: pointer;
+            color: #e2e8f0;
+        }
+
+        .dropdown-item:hover {
+            background-color: #334155;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header-container p-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            
+            <h1 class="text-3xl font-extrabold text-red-500 flex items-center">
+                <i data-lucide="shopping-basket" class="w-8 h-8 mr-2"></i>
+                Mercado GCG
+            </h1>
+            
+            <div class="relative">
+                <button id="userAccountBtn" class="flex items-center space-x-2 p-2 rounded-full bg-red-600 hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <i data-lucide="settings" class="w-6 h-6 text-white"></i> 
+                    <span id="userNameDisplay" class="text-sm font-semibold text-white">Cargando...</span>
+                </button>
+
+                <div id="userDropdownMenu" class="dropdown-menu">
+                    <div id="profileBtn" class="dropdown-item">
+                        <i data-lucide="user-circle" class="w-5 h-5 mr-3"></i>
+                        <span>Perfil</span>
+                    </div>
+                    <div id="logoutMenuBtn" class="dropdown-item text-red-400 hover:text-red-300">
+                        <i data-lucide="log-out" class="w-5 h-5 mr-3"></i>
+                        <span>Cerrar Sesión</span>
+                    </div>
+                </div>
+            </div>
+            </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-8 w-full">
+        
+        <section class="mb-8">
+            <h2 class="text-xl font-bold mb-4 text-slate-300">Explorar por Categoría</h2>
+            <div id="categoriesContainer" class="categories-container flex space-x-3 pb-2">
+                </div>
+        </section>
+
+        <section>
+            <h2 id="currentCategoryTitle" class="text-2xl font-extrabold mb-6 text-white border-b border-slate-700 pb-2">Todos los Artículos</h2>
+            
+            <div id="productsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                </div>
+        </section>
+    </main>
+    
+    <div id="detailsModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content rounded-xl w-full md:w-3/4 lg:w-1/2 p-6">
+            <div class="flex justify-between items-start border-b border-slate-700 pb-4 mb-4">
+                <h2 id="modalTitle" class="text-3xl font-extrabold text-white">Detalles del Artículo</h2>
+                <button onclick="document.getElementById('detailsModal').classList.remove('open')" class="text-slate-400 hover:text-white transition-colors p-1">
+                    <i data-lucide="x" class="w-8 h-8"></i>
+                </button>
+            </div>
+
+            <div id="modalBody" class="flex flex-col md:flex-row gap-6">
+                <div class="md:w-1/3 flex-shrink-0">
+                    <div id="modalImage" class="product-image-placeholder rounded-lg">
+                        <i data-lucide="gem" class="w-12 h-12"></i>
+                    </div>
+                    <p id="modalCategory" class="text-sm font-semibold mt-3 text-center capitalize text-slate-400">Categoría: </p>
+                </div>
+
+                <div class="md:w-2/3">
+                    <h3 class="text-xl font-bold mb-3 text-red-400">Variantes Disponibles</h3>
+                    <div id="variantsContainer">
+                        <div class="text-center py-8 text-slate-400" id="modalLoading">
+                            Cargando variantes y precios...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="logoutConfirmModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content rounded-xl p-6 w-96">
+            <h2 class="text-2xl font-extrabold text-white border-b border-slate-700 pb-3 mb-4">Confirmar Cierre de Sesión</h2>
+            <p class="text-slate-300 mb-6">¿Estás seguro de que quieres cerrar la sesión en GCG Store?</p>
+            <div class="flex justify-end space-x-3">
+                <button id="logoutConfirmNo" class="bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors font-medium">
+                    No
+                </button>
+                <button id="logoutConfirmYes" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Sí, Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </div>
+    <footer class="mt-8 text-center text-xs text-slate-500 p-4">
+        &copy; 2025 GCG Store | Catálogo Digital
+    </footer>
+
+    <script type="module">
+        // Importaciones de Firebase
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+
+        // -------------------------------------------------------------------------
+        // // CONFIGURACIÓN DE FIREBASE
+        // -------------------------------------------------------------------------
+        
+        // Carga la configuración de Firebase de la variable global (proporcionada por el entorno)
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyBuMR96QYOR2YIQtTmGhdCGRwWMLtPZHjg", 
+            authDomain: "sample-firebase-ai-app-bc1bf.firebaseapp.com", 
+            projectId: "sample-firebase-ai-app-bc1bf", 
+            storageBucket: "sample-firebase-ai-app-bc1bf.firebasestorage.app", 
+            messagingSenderId: "809905562994",
+            appId: "1:809905562994:web:5f1b15b1da23d892a2a9eb"
+        };
+        
+        // Variable para la ruta de Firestore (usando __app_id si está disponible)
+        let storageAppId = firebaseConfig.projectId;
+        if (typeof __app_id !== 'undefined') {
+            storageAppId = __app_id;
+        }
+
+        // -------------------------------------------------------------------------
+        // // INICIALIZACIÓN DE SERVICIOS
+        // -------------------------------------------------------------------------
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // -------------------------------------------------------------------------
+        // // DATOS DE ARTÍCULOS (LISTA COMPLETA)
+        // -------------------------------------------------------------------------
+
+        // Definición de las 8 categorías + 'Todos'
+        const CATEGORIES = ["Todos", "comun", "raro", "epico", "legendario", "mistico", "dios", "secret", "OG"];
+        let currentCategory = CATEGORIES[0]; // "Todos" por defecto
+
+        // Lista de artículos con rutas de imagen automáticas: bainrot/{Nombre}.png
+        const PRODUCTS_DATA = [
+            // Comunes
+            { id: 1, nombre: "Noobini Pizzanini", categoria: "comun", imagePath: "bainrot/Noobini Pizzanini.png" },
+            { id: 2, nombre: "Lirfli Larlilà", categoria: "comun", imagePath: "bainrot/Lirfli Larlilà.png" },
+            { id: 3, nombre: "Tim Cheese", categoria: "comun", imagePath: "bainrot/Tim Cheese.png" },
+            { id: 4, nombre: "Fluriflura", categoria: "comun", imagePath: "bainrot/Fluriflura.png" },
+            { id: 5, nombre: "Talpa Di Fero", categoria: "comun", imagePath: "bainrot/Talpa Di Fero.png" },
+            { id: 6, nombre: "Svinina Bombardino", categoria: "comun", imagePath: "bainrot/Svinina Bombardino.png" },
+            { id: 7, nombre: "Pipi Kiwi", categoria: "comun", imagePath: "bainrot/Pipi Kiwi.png" },
+            // Raros
+            { id: 8, nombre: "TrippiTroppi", categoria: "raro", imagePath: "bainrot/TrippiTroppi.png" },
+            { id: 9, nombre: "Gangster Footera", categoria: "raro", imagePath: "bainrot/Gangster Footera.png" },
+            { id: 10, nombre: "Bandito Bobritto", categoria: "raro", imagePath: "bainrot/Bandito Bobritto.png" },
+            { id: 11, nombre: "Boneca Ambalabu", categoria: "raro", imagePath: "bainrot/Boneca Ambalabu.png" },
+            { id: 12, nombre: "Cacto Hipopotamo", categoria: "raro", imagePath: "bainrot/Cacto Hipopotamo.png" },
+            { id: 13, nombre: "TaTaTaTa Sahur", categoria: "raro", imagePath: "bainrot/TaTaTaTa Sahur.png" },
+            { id: 14, nombre: "TricTrac Baraboom", categoria: "raro", imagePath: "bainrot/TricTrac Baraboom.png" },
+            // Epicos
+            { id: 15, nombre: "Cappuccino Assassino", categoria: "epico", imagePath: "bainrot/Cappuccino Assassino.png" },
+            { id: 16, nombre: "Brr Brr Patapim", categoria: "epico", imagePath: "bainrot/Brr Brr Patapim.png" },
+            { id: 17, nombre: "Avocadini Antilopini", categoria: "epico", imagePath: "bainrot/Avocadini Antilopini.png" },
+            { id: 18, nombre: "Trulimero Trulicina", categoria: "epico", imagePath: "bainrot/Trulimero Trulicina.png" },
+            { id: 19, nombre: "Bambini Crostini", categoria: "epico", imagePath: "bainrot/Bambini Crostini.png" },
+            { id: 20, nombre: "Bananita Dolphinita", categoria: "epico", imagePath: "bainrot/Bananita Dolphinita.png" },
+            { id: 21, nombre: "Perochello Lemonchello", categoria: "epico", imagePath: "bainrot/Perochello Lemonchello.png" },
+            { id: 22, nombre: "Brri Brri Bicus Dicus Bombicus", categoria: "epico", imagePath: "bainrot/Brri Brri Bicus Dicus Bombicus.png" },
+            { id: 23, nombre: "Avocadini Guffo", categoria: "epico", imagePath: "bainrot/Avocadini Guffo.png" },
+            { id: 24, nombre: "Salamino Penguinio", categoria: "epico", imagePath: "bainrot/Salamino Penguinio.png" },
+            { id: 25, nombre: "Wombo Rollo", categoria: "epico", imagePath: "bainrot/Wombo Rollo.png" },
+            // Legendarios
+            { id: 26, nombre: "Burbaloni Loliloli", categoria: "legendario", imagePath: "bainrot/Burbaloni Loliloli.png" },
+            { id: 27, nombre: "Chimpanzini Bananini", categoria: "legendario", imagePath: "bainrot/Chimpanzini Bananini.png" },
+            { id: 28, nombre: "Ballerina Cappuccina", categoria: "legendario", imagePath: "bainrot/Ballerina Cappuccina.png" },
+            { id: 29, nombre: "Chef Crabracadabra", categoria: "legendario", imagePath: "bainrot/Chef Crabracadabra.png" },
+            { id: 30, nombre: "Lionel Cactuseli", categoria: "legendario", imagePath: "bainrot/Lionel Cactuseli.png" },
+            { id: 31, nombre: "Glorbo Fruttodrillo", categoria: "legendario", imagePath: "bainrot/Glorbo Fruttodrillo.png" },
+            { id: 32, nombre: "Quivoli Ameleonni", categoria: "legendario", imagePath: "bainrot/Quivoli Ameleonni.png" },
+            { id: 33, nombre: "Blueberrini Octopusini", categoria: "legendario", imagePath: "bainrot/Blueberrini Octopusini.png" },
+            { id: 34, nombre: "Pipi Potato", categoria: "legendario", imagePath: "bainrot/Pipi Potato.png" },
+            { id: 35, nombre: "Strawberrelli Flamingelli", categoria: "legendario", imagePath: "bainrot/Strawberrelli Flamingelli.png" },
+            { id: 36, nombre: "Pandacini Bananini", categoria: "legendario", imagePath: "bainrot/Pandacini Bananini.png" },
+            { id: 37, nombre: "Sigma Boy", categoria: "legendario", imagePath: "bainrot/Sigma Boy.png" },
+            // Misticos
+            { id: 38, nombre: "Frigo Camelo", categoria: "mistico", imagePath: "bainrot/Frigo Camelo.png" },
+            { id: 39, nombre: "Orangutini Ananassini", categoria: "mistico", imagePath: "bainrot/Orangutini Ananassini.png" },
+            { id: 40, nombre: "RhinoToasterino", categoria: "mistico", imagePath: "bainrot/RhinoToasterino.png" },
+            { id: 41, nombre: "Centrucci Nucucci", categoria: "mistico", imagePath: "bainrot/Centrucci Nucucci.png" },
+            { id: 42, nombre: "Bombardiro Crocodilo", categoria: "mistico", imagePath: "bainrot/Bombardiro Crocodilo.png" },
+            { id: 43, nombre: "Bombombini Gusini", categoria: "mistico", imagePath: "bainrot/Bombombini Gusini.png" },
+            { id: 44, nombre: "Cavallo Virtuoso", categoria: "mistico", imagePath: "bainrot/Cavallo Virtuoso.png" },
+            { id: 45, nombre: "Gorillo Watermelondrillo", categoria: "mistico", imagePath: "bainrot/Gorillo Watermelondrillo.png" },
+            { id: 46, nombre: "Cachorrito Melonito", categoria: "mistico", imagePath: "bainrot/Cachorrito Melonito.png" },
+            { id: 47, nombre: "Lerulerulerule", categoria: "mistico", imagePath: "bainrot/Lerulerulerule.png" },
+            { id: 48, nombre: "TeTeTe Sahur", categoria: "mistico", imagePath: "bainrot/TeTeTe Sahur.png" },
+            { id: 49, nombre: "Tracoducotulu Delapeladustuz", categoria: "mistico", imagePath: "bainrot/Tracoducotulu Delapeladustuz.png" },
+            { id: 50, nombre: "Focaccino de baño", categoria: "mistico", imagePath: "bainrot/Focaccino de baño.png" },
+            // Dioses
+            { id: 51, nombre: "Cocofanto Elefanto", categoria: "dios", imagePath: "bainrot/Cocofanto Elefanto.png" },
+            { id: 52, nombre: "Jirafa Celestre", categoria: "dios", imagePath: "bainrot/Jirafa Celestre.png" },
+            { id: 53, nombre: "Tralalero Tralala", categoria: "dios", imagePath: "bainrot/Tralalero Tralala.png" },
+            { id: 54, nombre: "Tigroligre Frutonni", categoria: "dios", imagePath: "bainrot/Tigroligre Frutonni.png" },
+            { id: 55, nombre: "Odin Din Din Dun", categoria: "dios", imagePath: "bainrot/Odin Din Din Dun.png" },
+            { id: 56, nombre: "Orcalero Orcala", categoria: "dios", imagePath: "bainrot/Orcalero Orcala.png" },
+            { id: 57, nombre: "Tralalita Tralala", categoria: "dios", imagePath: "bainrot/Tralalita Tralala.png" },
+            { id: 58, nombre: "Trenostruzzo Turbo 3000", categoria: "dios", imagePath: "bainrot/Trenostruzzo Turbo 3000.png" },
+            { id: 59, nombre: "Trippi Troppi Troppa Trippa", categoria: "dios", imagePath: "bainrot/Trippi Troppi Troppa Trippa.png" },
+            { id: 60, nombre: "Ballerino Lololo", categoria: "dios", imagePath: "bainrot/Ballerino Lololo.png" },
+            { id: 61, nombre: "Bulbito Bandito Traktorito", categoria: "dios", imagePath: "bainrot/Bulbito Bandito Traktorito.png" },
+            { id: 62, nombre: "Pakrahmatmamat", categoria: "dios", imagePath: "bainrot/Pakrahmatmamat.png" },
+            { id: 63, nombre: "Piccione Macchina", categoria: "dios", imagePath: "bainrot/Piccione Macchina.png" },
+            { id: 64, nombre: "Tractoro Dinosauro", categoria: "dios", imagePath: "bainrot/Tractoro Dinosauro.png" },
+            { id: 65, nombre: "Los Orcalitos", categoria: "dios", imagePath: "bainrot/Los Orcalitos.png" },
+            { id: 66, nombre: "Cacasito Satalito", categoria: "dios", imagePath: "bainrot/Cacasito Satalito.png" },
+            { id: 67, nombre: "Tartaruga Cisterna", categoria: "dios", imagePath: "bainrot/Tartaruga Cisterna.png" },
+            { id: 68, nombre: "Mastodontico Telepiedone", categoria: "dios", imagePath: "bainrot/Mastodontico Telepiedone.png" },
+            { id: 69, nombre: "Pop Pop Sahur", categoria: "dios", imagePath: "bainrot/Pop Pop Sahur.png" },
+            // Secrets
+            { id: 70, nombre: "Los Matteos", categoria: "secret", imagePath: "bainrot/Los Matteos.png" },
+            { id: 71, nombre: "Bisonte Giuppitere", categoria: "secret", imagePath: "bainrot/Bisonte Giuppitere.png" },
+            { id: 72, nombre: "La Vacca Saturno Saturnita", categoria: "secret", imagePath: "bainrot/La Vacca Saturno Saturnita.png" },
+            { id: 73, nombre: "1x1x1x1", categoria: "secret", imagePath: "bainrot/1x1x1x1.png" },
+            { id: 74, nombre: "Invitado 666", categoria: "secret", imagePath: "bainrot/Invitado 666.png" },
+            { id: 75, nombre: "Horegini Boom", categoria: "secret", imagePath: "bainrot/Horegini Boom.png" },
+            { id: 76, nombre: "Rang Ring Bus", categoria: "secret", imagePath: "bainrot/Rang Ring Bus.png" },
+            { id: 77, nombre: "Torttuginni Dragonfrutini", categoria: "secret", imagePath: "bainrot/Torttuginni Dragonfrutini.png" },
+            { id: 78, nombre: "Los Tralaleritos", categoria: "secret", imagePath: "bainrot/Los Tralaleritos.png" },
+            { id: 79, nombre: "Los Spyderinis", categoria: "secret", imagePath: "bainrot/Los Spyderinis.png" },
+            { id: 80, nombre: "Las Tralaleritas", categoria: "secret", imagePath: "bainrot/Las Tralaleritas.png" },
+            { id: 81, nombre: "Job Job Job Sahur", categoria: "secret", imagePath: "bainrot/Job Job Job Sahur.png" },
+            { id: 82, nombre: "Noo my examine", categoria: "secret", imagePath: "bainrot/Noo my examine.png" },
+            { id: 83, nombre: "Las Vaquitas Saturnitas", categoria: "secret", imagePath: "bainrot/Las Vaquitas Saturnitas.png" },
+            { id: 84, nombre: "Graipuss Medussi", categoria: "secret", imagePath: "bainrot/Graipuss Medussi.png" },
+            { id: 85, nombre: "To to to Sahur", categoria: "secret", imagePath: "bainrot/To to to Sahur.png" },
+            { id: 86, nombre: "Pot Hotspot", categoria: "secret", imagePath: "bainrot/Pot Hotspot.png" },
+            { id: 87, nombre: "Chicleteira Bicicleteira", categoria: "secret", imagePath: "bainrot/Chicleteira Bicicleteira.png" },
+            { id: 88, nombre: "Chicleteirina Bicicleteirina", categoria: "secret", imagePath: "bainrot/Chicleteirina Bicicleteirina.png" },
+            { id: 89, nombre: "Los Chicleteiras", categoria: "secret", imagePath: "bainrot/Los Chicleteiras.png" },
+            { id: 90, nombre: "La Grande Combinasion", categoria: "secret", imagePath: "bainrot/La Grande Combinasion.png" },
+            { id: 91, nombre: "Swag Soda", categoria: "secret", imagePath: "bainrot/Swag Soda.png" },
+            { id: 92, nombre: "Nuclearo Dinossauro", categoria: "secret", imagePath: "bainrot/Nuclearo Dinossauro.png" },
+            { id: 93, nombre: "Esok Sekolah", categoria: "secret", imagePath: "bainrot/Esok Sekolah.png" },
+            { id: 94, nombre: "Money Money Puggy", categoria: "secret", imagePath: "bainrot/Money Money Puggy.png" },
+            { id: 95, nombre: "Ketupat Kepat", categoria: "secret", imagePath: "bainrot/Ketupat Kepat.png" },
+            { id: 96, nombre: "Tictac Sahur", categoria: "secret", imagePath: "bainrot/Tictac Sahur.png" },
+            { id: 97, nombre: "Ketchuru y Musturu", categoria: "secret", imagePath: "bainrot/Ketchuru y Musturu.png" },
+            { id: 98, nombre: "Garama y Madundung", categoria: "secret", imagePath: "bainrot/Garama y Madundung.png" },
+            { id: 99, nombre: "Spaghetti Tualetti", categoria: "secret", imagePath: "bainrot/Spaghetti Tualetti.png" },
+            { id: 100, nombre: "Capitano Moby", categoria: "secret", imagePath: "bainrot/Capitano Moby.png" },
+            { id: 101, nombre: "La Secret Combinasion", categoria: "secret", imagePath: "bainrot/La Secret Combinasion.png" },
+            { id: 102, nombre: "Burguro y Fryuro", categoria: "secret", imagePath: "bainrot/Burguro y Fryuro.png" },
+            { id: 103, nombre: "Dragon Cannelloni", categoria: "secret", imagePath: "bainrot/Dragon Cannelloni.png" },
+            // OGs
+            { id: 104, nombre: "Elefante Fresa", categoria: "OG", imagePath: "bainrot/Elefante Fresa.png" },
+            { id: 105, nombre: "Miau", categoria: "OG", imagePath: "bainrot/Miau.png" }
+        ];
+        
+        // DATOS DE VARIANTE (GENERADOS AUTOMÁTICAMENTE PARA TODOS)
+        // Esto es un simulador. En un sistema real, vendrían de Firestore.
+        const PRODUCT_VARIANTS = {
+            // Generador dinámico de variantes para que todos los productos tengan algo al hacer clic
+            default: (nombre) => [
+                { id: Date.now(), nombre: `${nombre} (Estándar)`, precio: Math.floor(Math.random() * 5000) + 1000 },
+                { id: Date.now() + 1, nombre: `${nombre} (Premium)`, precio: Math.floor(Math.random() * 20000) + 5000 },
+                { id: Date.now() + 2, nombre: `${nombre} (Shiny)`, precio: Math.floor(Math.random() * 50000) + 15000 }
+            ]
+        };
+
+        // -------------------------------------------------------------------------
+        // // REFERENCIAS DEL DOM (NUEVAS REFERENCIAS AÑADIDAS)
+        // -------------------------------------------------------------------------
+
+        const userNameDisplay = document.getElementById('userNameDisplay');
+        const userAccountBtn = document.getElementById('userAccountBtn');
+        const categoriesContainer = document.getElementById('categoriesContainer');
+        const productsGrid = document.getElementById('productsGrid');
+        const currentCategoryTitle = document.getElementById('currentCategoryTitle');
+        
+        // Referencias del Menú de Usuario
+        const userDropdownMenu = document.getElementById('userDropdownMenu');
+        const profileBtn = document.getElementById('profileBtn');
+        const logoutMenuBtn = document.getElementById('logoutMenuBtn');
+        
+        // Referencias del Modal de Detalles
+        const detailsModal = document.getElementById('detailsModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalImage = document.getElementById('modalImage');
+        const modalCategory = document.getElementById('modalCategory');
+        const variantsContainer = document.getElementById('variantsContainer');
+        const modalLoading = document.getElementById('modalLoading');
+        
+        // Referencias del NUEVO Modal de Cierre de Sesión
+        const logoutConfirmModal = document.getElementById('logoutConfirmModal');
+        const logoutConfirmYes = document.getElementById('logoutConfirmYes');
+        const logoutConfirmNo = document.getElementById('logoutConfirmNo');
+
+        let loggedUser = null;
+
+        // -------------------------------------------------------------------------
+        // // FUNCIONES DEL MODAL DE DETALLES
+        // -------------------------------------------------------------------------
+
+        // ... (renderVariantsTable y showProductDetails no se modifican)
+        
+        /**
+         * Renderiza la tabla de variantes en el modal.
+         */
+        function renderVariantsTable(variants) {
+            if (variants.length === 0) {
+                return '<p class="text-slate-500">No hay variantes de este artículo disponibles actualmente.</p>';
+            }
+
+            const tableRows = variants.map(variant => `
+                <tr class="hover:bg-slate-700/50">
+                    <td class="text-white font-medium">${variant.nombre}</td>
+                    <td class="text-red-400 font-extrabold">$${variant.precio.toLocaleString('es-ES')}</td>
+                    <td>
+                        <button class="bg-red-600 text-white px-3 py-1 rounded-full text-sm hover:bg-red-700 transition-colors font-medium">
+                            Comprar
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            return `
+                <table class="variants-table w-full rounded-lg overflow-hidden">
+                    <thead>
+                        <tr>
+                            <th>Nombre de Variante</th>
+                            <th>Precio</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        /**
+         * Muestra el modal de detalles del producto con sus variantes.
+         * @param {number} productId - El ID del producto a mostrar.
+         */
+        window.showProductDetails = function(productId) {
+            const product = PRODUCTS_DATA.find(p => p.id === productId);
+            if (!product) return;
+            
+            // 1. Mostrar modal y mensaje de carga
+            detailsModal.classList.add('open');
+            modalTitle.textContent = product.nombre;
+            modalCategory.textContent = `Categoría: ${product.categoria.charAt(0).toUpperCase() + product.categoria.slice(1)}`;
+            variantsContainer.innerHTML = '';
+            modalLoading.style.display = 'block';
+
+            // 2. Establecer la imagen
+            const placeholderUrl = `https://placehold.co/200x200/334155/94a3b8?text=ÍTEM+GCG`;
+            // Aquí usamos la lógica simple: si imagePath existe, lo usa. 
+            // El placeholder es solo un fallback si la imagen falla al cargar (manejado por onerror en el HTML)
+            const imageSrc = product.imagePath;
+            
+            modalImage.innerHTML = `<img src="${imageSrc}" alt="${product.nombre}" class="w-full h-auto object-contain rounded-t-xl" 
+                                        onerror="this.onerror=null; this.src='${placeholderUrl}';" />`;
+            
+            // 3. Simular la carga de variantes (Podría ser una llamada a Firebase)
+            setTimeout(() => {
+                modalLoading.style.display = 'none';
+
+                // Como no tenemos variantes específicas en la lista de chat, usamos el generador default
+                let variants = PRODUCT_VARIANTS[productId] || PRODUCT_VARIANTS.default(product.nombre);
+
+                variantsContainer.innerHTML = renderVariantsTable(variants);
+                lucide.createIcons(); // Recargar íconos si se usan dentro del modal
+            }, 500); // 500ms de retraso simulado
+        };
+        
+        /**
+         * Cierra el modal si se hace clic fuera del contenido.
+         * Se modificó para cerrar ambos modales.
+         * @param {Event} e - Evento de clic
+         */
+        window.closeModal = function(e) {
+            if (e.target.id === 'detailsModal') {
+                detailsModal.classList.remove('open');
+            }
+            if (e.target.id === 'logoutConfirmModal') {
+                logoutConfirmModal.classList.remove('open');
+            }
+        };
+
+        // -------------------------------------------------------------------------
+        // // FUNCIONES DE RENDERIZADO Y LÓGICA DE FILTROS (ACTUALIZADO: SIN PRECIO)
+        // -------------------------------------------------------------------------
+
+        // ... (renderProductCard, filterAndRenderProducts y renderCategoryButtons no se modifican)
+
+        /**
+         * Renderiza un único artículo como una tarjeta en la cuadrícula.
+         * @param {object} product - El objeto de datos del producto.
+         * @returns {string} HTML de la tarjeta del producto.
+         */
+        function renderProductCard(product) {
+            // Usa una imagen de placeholder si el path no existe
+            const placeholderUrl = `https://placehold.co/200x200/334155/94a3b8?text=ÍTEM+GCG`;
+            const imageSrc = product.imagePath;
+            
+            // Clase de color basada en la categoría (para darle el toque visual)
+            let colorClass = 'text-slate-400';
+            switch(product.categoria.toLowerCase()) {
+                case 'raro': colorClass = 'text-blue-400'; break;
+                case 'epico': colorClass = 'text-purple-400'; break;
+                case 'legendario': colorClass = 'text-orange-400'; break;
+                case 'mistico': colorClass = 'text-pink-400'; break;
+                case 'dios': colorClass = 'text-yellow-400'; break;
+                case 'secret': colorClass = 'text-red-400'; break; 
+                case 'og': colorClass = 'text-green-400'; break;
+                case 'comun': colorClass = 'text-slate-400'; break;
+            }
+
+            // NOTA: Se ha añadido el evento onClick directamente a la tarjeta
+            return `
+                <div id="product-${product.id}" class="product-card rounded-xl overflow-hidden shadow-lg" onclick="showProductDetails(${product.id})">
+                    <div class="product-image-placeholder">
+                        <img src="${imageSrc}" alt="${product.nombre}" class="w-full h-auto object-contain rounded-t-xl" 
+                             onerror="this.onerror=null; this.src='${placeholderUrl}';" />
+                    </div>
+                    
+                    <div class="p-3">
+                        <p class="text-xs font-semibold ${colorClass} capitalize mb-1">${product.categoria}</p>
+                        <h3 class="text-white font-bold text-base line-clamp-2">${product.nombre}</h3>
+                        
+                        <button class="w-full mt-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                            Ver Detalle
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        /**
+         * Filtra y renderiza la cuadrícula de productos.
+         * @param {string} category - La categoría a filtrar.
+         */
+        function filterAndRenderProducts(category) {
+            productsGrid.innerHTML = `<div id="loadingMessage" class="col-span-full text-center py-10 text-slate-400">Cargando productos...</div>`;
+            
+            currentCategory = category;
+            
+            // 1. Actualizar título
+            currentCategoryTitle.textContent = category === 'Todos' ? 
+                "Todos los Artículos" : 
+                `Artículos: ${category.charAt(0).toUpperCase() + category.slice(1)}`;
+
+            // 2. Filtrar los datos
+            const filteredProducts = category === 'Todos'
+                ? PRODUCTS_DATA
+                : PRODUCTS_DATA.filter(p => p.categoria.toLowerCase() === category.toLowerCase());
+
+            // 3. Generar el HTML
+            let productHtml = filteredProducts.map(renderProductCard).join('');
+
+            // 4. Inyectar en el DOM
+            setTimeout(() => {
+                
+                if (filteredProducts.length === 0) {
+                    productsGrid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400">No se encontraron artículos en la categoría "${category}".</div>`;
+                } else {
+                    productsGrid.innerHTML = productHtml;
+                }
+                
+                // 5. Actualizar la apariencia de los botones de categoría
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    if (btn.dataset.category.toLowerCase() === category.toLowerCase()) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }, 50);
+        }
+
+
+        /**
+         * Renderiza los botones de categorías en el contenedor.
+         */
+        function renderCategoryButtons() {
+            categoriesContainer.innerHTML = CATEGORIES.map(category => {
+                const activeClass = category === currentCategory ? 'active' : '';
+                return `
+                    <button class="category-btn ${activeClass}" data-category="${category}">
+                        ${category.charAt(0).toUpperCase() + category.slice(1)}
+                    </button>
+                `;
+            }).join('');
+            
+            document.querySelectorAll('.category-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const category = e.target.dataset.category;
+                    filterAndRenderProducts(category);
+                });
+            });
+        }
+
+        // -------------------------------------------------------------------------
+        // // FUNCIONES DE LÓGICA DE USUARIO (NUEVAS Y MODIFICADAS)
+        // -------------------------------------------------------------------------
+        
+        /**
+         * Cierra la sesión del usuario.
+         */
+        async function handleLogout() {
+            try {
+                await signOut(auth);
+                // La redirección ocurrirá en el onAuthStateChanged
+            } catch (error) {
+                console.error("Error al cerrar sesión:", error);
+                alert("ERROR: Ocurrió un error al intentar cerrar la sesión. Inténtalo de nuevo.");
+            }
+        }
+        
+        /**
+         * Muestra/Oculta el menú desplegable.
+         */
+        function toggleDropdown() {
+            userDropdownMenu.classList.toggle('open');
+            // Cierra el menú si se hace clic fuera
+            if (userDropdownMenu.classList.contains('open')) {
+                document.addEventListener('click', closeDropdownOutside);
+            } else {
+                document.removeEventListener('click', closeDropdownOutside);
+            }
+        }
+        
+        /**
+         * Cierra el menú desplegable si se hace clic fuera de él.
+         * @param {Event} e - Evento de clic
+         */
+        function closeDropdownOutside(e) {
+            // Verifica si el clic fue fuera del botón y del menú
+            if (!userAccountBtn.contains(e.target) && !userDropdownMenu.contains(e.target)) {
+                userDropdownMenu.classList.remove('open');
+                document.removeEventListener('click', closeDropdownOutside);
+            }
+        }
+
+        // -------------------------------------------------------------------------
+        // // LÓGICA DE AUTENTICACIÓN Y CARGA INICIAL
+        // -------------------------------------------------------------------------
+
+        /**
+         * Intenta obtener el nombre del usuario desde Firestore
+         */
+        async function fetchUserName(uid) {
+            const userDocRef = doc(db, `artifacts/${storageAppId}/users/${uid}/user_data/profile`);
+            try {
+                const docSnap = await getDoc(userDocRef);
+                if (docSnap.exists()) {
+                    return docSnap.data().fullName || loggedUser.email; 
+                }
+            } catch (error) {
+                console.error("Error al obtener nombre de usuario:", error);
+            }
+            return loggedUser ? loggedUser.email : 'Usuario';
+        }
+
+
+        /**
+         * Listener que se ejecuta al cambiar el estado de autenticación.
+         */
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                loggedUser = user;
+                
+                const displayName = await fetchUserName(user.uid);
+                userNameDisplay.textContent = displayName.length > 15 ? displayName.substring(0, 12) + '...' : displayName;
+                userNameDisplay.title = user.email; 
+                
+                lucide.createIcons(); 
+                
+                renderCategoryButtons();
+                filterAndRenderProducts(currentCategory);
+
+            } else {
+                console.log("No hay usuario logueado. Redirigiendo a index.html");
+                window.location.href = "index.html"; 
+            }
+        });
+
+        // -------------------------------------------------------------------------
+        // // EVENTOS DEL MENÚ Y CIERRE DE SESIÓN (MODIFICADOS)
+        // -------------------------------------------------------------------------
+        
+        // 1. Evento para Abrir/Cerrar el Menú Desplegable
+        userAccountBtn.addEventListener('click', toggleDropdown);
+        
+        // 2. Evento para el botón de PERFIL
+        profileBtn.addEventListener('click', () => {
+            if (loggedUser) {
+                userDropdownMenu.classList.remove('open'); // Cierra el menú
+                window.location.href = "profile.html"; // Redirige a profile.html
+            }
+        });
+        
+        // 3. Evento para el botón de CERRAR SESIÓN (Muestra el Modal)
+        logoutMenuBtn.addEventListener('click', () => {
+            if (loggedUser) {
+                userDropdownMenu.classList.remove('open'); // Cierra el menú
+                logoutConfirmModal.classList.add('open'); // Abre el modal de confirmación
+            }
+        });
+        
+        // 4. Evento para el botón "SÍ" del Modal de Confirmación
+        logoutConfirmYes.addEventListener('click', () => {
+            logoutConfirmModal.classList.remove('open'); // Cierra el modal
+            handleLogout(); // Cierra la sesión
+        });
+        
+        // 5. Evento para el botón "NO" del Modal de Confirmación
+        logoutConfirmNo.addEventListener('click', () => {
+            logoutConfirmModal.classList.remove('open'); // Simplemente cierra el modal
+        });
+        
+        // Renderizar íconos de Lucide (inicialmente y después de inyectar contenido dinámico)
+        lucide.createIcons();
+
+    </script>
+</body>
+</html>

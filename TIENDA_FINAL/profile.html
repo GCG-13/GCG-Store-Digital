@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - GCG Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            background-image: radial-gradient(#1e293b 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .profile-card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+        }
+        .btn-logout {
+            background-color: #ef4444;
+            transition: all 0.2s ease;
+        }
+        .btn-logout:hover {
+            background-color: #b91c1c;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            transform: translateY(-1px);
+        }
+        /* Definición de la animación de carga */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin 2s linear infinite;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div id="loadingState" class="text-center">
+        <svg class="animate-spin-slow h-8 w-8 text-red-500 mx-auto" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="mt-4 text-slate-400">Verificando su sesión...</p>
+    </div>
+
+    <!-- TARJETA DEL PERFIL (Inicialmente oculta) -->
+    <div id="profileCard" class="profile-card rounded-2xl shadow-2xl w-full max-w-md p-8 relative hidden" style="opacity: 0;">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-extrabold text-white tracking-tight">¡Bienvenido de vuelta!</h1>
+            <p id="welcomeMessage" class="text-red-400 text-xl mt-2 font-bold">[Cargando Nombre...]</p>
+        </div>
+
+        <div class="space-y-4 border-t border-b border-slate-700 py-6 mb-8">
+            <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Rol:</span>
+                <span id="userRole" class="font-medium text-white">Cliente</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Correo Electrónico:</span>
+                <span id="userEmail" class="font-medium text-white">[Cargando...]</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-slate-400">ID de Usuario (UID):</span>
+                <span id="userUID" class="font-medium text-white text-xs break-all">[Cargando...]</span>
+            </div>
+        </div>
+        
+        <!-- Botón para cerrar sesión -->
+        <button id="logoutButton" class="btn-logout text-white font-bold py-3 rounded-lg w-full transition-all">
+            Cerrar Sesión
+        </button>
+
+        <div class="mt-6 text-center pt-4">
+            <!-- Redirección de vuelta a la tienda -->
+            <p class="text-xs text-slate-500">Volver a la <a href="store.html" class="text-red-400 hover:underline">Tienda</a></p>
+        </div>
+    </div>
+
+    <script type="module">
+        // Importaciones de Firebase V10
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            signOut
+        } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+
+        // Establecer el nivel de registro de Firestore a Debug
+        setLogLevel('Debug');
+
+        // =========================================================================
+        // --- CONFIGURACIÓN DE FIREBASE (USANDO CONFIGURACIÓN REAL DEL PROYECTO) ---
+        // Se asume que firebaseConfig ya fue inyectada o está definida.
+        // Se usa la configuración inyectada por el entorno de Canvas o la predefinida.
+        // =========================================================================
+        
+        // Carga la configuración global inyectada (si existe) o usa una predeterminada.
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyBuMR96QYOR2YIQtTmGhdCGRwWMLtPZHjg", 
+            authDomain: "sample-firebase-ai-app-bc1bf.firebaseapp.com", 
+            projectId: "sample-firebase-ai-app-bc1bf", 
+            storageBucket: "sample-firebase-ai-app-bc1bf.firebasestorage.app", 
+            messagingSenderId: "809905562994",
+            appId: "1:809905562994:web:5f1b15b1da23d892a2a9eb"
+        };
+        
+        // Variable para la ruta de Firestore
+        let storageAppId = firebaseConfig.projectId; 
+
+        // Si estamos en el entorno Canvas, usamos el ID de aplicación inyectado para las rutas de Firestore.
+        if (typeof __app_id !== 'undefined') {
+            storageAppId = __app_id;
+        }
+
+        // Inicialización de Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Referencias del DOM
+        const loadingState = document.getElementById('loadingState');
+        const profileCard = document.getElementById('profileCard');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const userEmail = document.getElementById('userEmail');
+        const userUID = document.getElementById('userUID');
+        const userRole = document.getElementById('userRole');
+        const logoutButton = document.getElementById('logoutButton');
+
+        // Función de carga de datos desde Firestore
+        async function loadProfileData(uid, email) {
+            // Ruta privada para los datos del perfil, usando la variable storageAppId
+            // Ruta: artifacts/{appId}/users/{userId}/user_data/profile
+            const userDocRef = doc(db, `artifacts/${storageAppId}/users/${uid}/user_data/profile`);
+
+            try {
+                const docSnap = await getDoc(userDocRef);
+
+                if (docSnap.exists()) {
+                    const profile = docSnap.data();
+                    // Usamos fullName (Nombre de Usuario) para el mensaje de bienvenida
+                    welcomeMessage.textContent = profile.fullName || email.split('@')[0];
+                    userRole.textContent = profile.role ? profile.role.toUpperCase() : "CUSTOMER";
+                } else {
+                    console.warn("Documento de perfil no encontrado en Firestore. Usando nombre genérico.");
+                    welcomeMessage.textContent = email.split('@')[0]; // Usa la parte del email antes del @
+                }
+                
+            } catch (error) {
+                console.error("Error al cargar datos del perfil:", error);
+                welcomeMessage.textContent = "Error de carga";
+            } finally {
+                // Rellenar datos de Firebase Auth
+                userEmail.textContent = email;
+                userUID.textContent = uid;
+                
+                // Mostrar la tarjeta y ocultar el loader
+                loadingState.classList.add('hidden');
+                profileCard.classList.remove('hidden');
+                profileCard.style.opacity = '1';
+                profileCard.style.transition = 'opacity 0.5s ease';
+            }
+        }
+
+        // --- LÓGICA DE AUTENTICACIÓN Y REDIRECCIÓN ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // 1. Usuario logueado. Cargar datos.
+                console.log("Usuario logueado:", user.uid);
+                const emailToDisplay = user.email || 'Token Canvas (Sin email)'; 
+                loadProfileData(user.uid, emailToDisplay);
+
+            } else {
+                // 2. Usuario NO logueado. Redirigir a la página de login.
+                console.log("Usuario no logueado. Redirigiendo a index.html...");
+                // Redirigir al login si la sesión se pierde o si el token Canvas no está presente.
+                window.location.replace("index.html"); 
+            }
+        });
+
+        // --- LÓGICA DE CIERRE DE SESIÓN ---
+        logoutButton.addEventListener('click', async () => {
+            try {
+                // Confirmación simple antes de cerrar
+                if (confirm('¿Estás seguro de que quieres cerrar la sesión?')) {
+                    await signOut(auth);
+                    console.log("Has cerrado sesión. Redirigiendo..."); 
+                    // onAuthStateChanged se encargará de la redirección.
+                }
+            } catch (error) {
+                console.error("Error al cerrar sesión:", error);
+                alert("Hubo un error al intentar cerrar la sesión. Intente de nuevo.");
+            }
+        });
+    </script>
+</body>
+</html>
